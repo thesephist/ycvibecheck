@@ -29,6 +29,5 @@ def semantic_search():
 
 @app.route('/', methods=['GET'])
 def index():
-    print('fuck')
     return app.send_static_file('index.html')
 
