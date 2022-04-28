@@ -1,0 +1,65 @@
+{
+	map: map
+	merge: merge
+	filter: filter
+	entries: entries
+} := import('std')
+{
+	join: join
+} := import('str')
+fmt := import('fmt')
+
+fn queryEncode(opts) entries(opts) |>
+	filter(fn(entry) entry.1 != ?) |>
+	map(fn(entry) entry.0 + '=' + encodeURIComponent(entry.1)) |>
+	join('&')
+
+fn similarCompany(query) {
+
+}
+
+fn similarText(query, withData) {
+	query |> merge({
+		n: 50
+	})
+
+	fn handleError(err) {
+		withData(?)
+	}
+
+	fetch('/search?' + queryEncode(query)).then(
+		fn(resp) if resp.status {
+			200 -> with resp.json().then() fn(data) {
+				withData(data)
+			}
+			_ -> handleError
+		}
+		handleError
+	)
+}
+
+fn news(query, withData) {
+	fn handleError(err) {
+		withData([])
+	}
+
+	url := 'https://hn.algolia.com/api/v1/search?' + queryEncode({
+		query: query
+		tags: '(story,show_hn,ask_hn)'
+		restrictSearchableAttributes: 'title,story_text'
+		queryType: 'prefixNone'
+		advancedSyntax: false
+		typoTolerance: false
+		hitsPerPage: 8
+	})
+	fetch(url).then(
+		fn(resp) if resp.status {
+			200 -> with resp.json().then() fn(data) {
+				withData(data.hits)
+			}
+			_ -> handleError
+		}
+		handleError
+	)
+}
+

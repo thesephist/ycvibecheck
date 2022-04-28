@@ -1,2 +1,6 @@
-# ycvibecheck
-Semantic similarity search across every Y Combinator company ever
+# Borealis: semantic search across the Valley
+
+- Scrape YC batch history
+- Semantic embedding vector index
+- Search UI
+

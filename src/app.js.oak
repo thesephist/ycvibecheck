@@ -1,0 +1,392 @@
+{
+	println: println
+	default: default
+	map: map
+	take: take
+	append: append
+	filter: filter
+	contains?: contains?
+} := import('std')
+{
+	trim: trim
+	trimStart: trimStart
+	trimEnd: trimEnd
+} := import('str')
+{
+	Renderer: Renderer
+	h: h
+} := import('../lib/torus.js')
+search := import('../lib/search.js')
+
+Batches := [
+	'S21', 'W21'
+	'S20', 'W20'
+	'S19', 'W19'
+	'S18', 'W18'
+	'S17', 'W17'
+	'S16', 'W16'
+]
+
+// TODO: how do we keep this project updated?
+// maybe an update script that just fetches the file from the
+// github? and a place in the footer of th epage or something that
+// tells the user / me updating the site in the future what batch
+// it was last updated for, and when (calendar date).
+
+State := {
+	search: {
+		loading?: false
+		query: ''
+		batch: ?
+		show_inactive: true
+		expandedCompanies: []
+	}
+	filters: {
+		batch: ?
+		status: ?
+	}
+	// map of <company.slug> => [<news object>]
+	news: {}
+	results: []
+	colorscheme: if localStorage.getItem('colorscheme') {
+		'dark' -> 'dark'
+		_ -> 'light'
+	}
+	showWelcome?: if localStorage.getItem('should_show_welcome') {
+		'false' -> false
+		_ -> true
+	}
+}
+
+fn submitSearch {
+	State.search.loading? := true
+	State.search.expandedCompanies := []
+	State.news := {}
+	render()
+
+	with search.similarText({
+		text: State.search.query |> trim()
+		batch: State.search.batch
+		show_inactive: State.search.show_inactive
+	}) fn(companies) {
+		State.search.loading? := false
+		State.results := companies
+		render()
+	}
+}
+
+fn cleanName(name) {
+	name |>
+		trimEnd('.') |>
+		trimEnd('Inc') |>
+		trim() |>
+		trimEnd(',')
+}
+
+fn hideWelcome {
+	State.showWelcome? := false
+	localStorage.setItem('should_show_welcome', 'false')
+}
+
+fn toggleColorScheme {
+	State.colorscheme := if State.colorscheme {
+		'light' -> 'dark'
+		_ -> 'light'
+	}
+	localStorage.setItem('colorscheme', State.colorscheme)
+}
+
+r := Renderer('#root')
+
+fn Link(text, href, classes...) h(:a, classes, { href: href, target: '_blank' }, [text])
+
+fn WelcomeMessage {
+	Examples := [
+		'AI safety'
+		'climate change'
+		'making remote work easy'
+		'supersonic flight'
+		'rapid grocery delivery'
+		'nuclear fusion'
+		'space infrastructure'
+	]
+
+	h(:div, ['welcome'], [
+		h(:h2, ['welcome-title'], ['Semantic search over every YC company ever'])
+		h(:p, [
+			'YC Vibe Check uses '
+			h(:em, ['semantic similarity'])
+			' to search Y Combinator\'s entire portfolio of over 3,000
+			companies. Unlike the search box in '
+			Link('YC\'s directory', 'https://www.ycombinator.com/companies')
+			', '
+			h(:em, ['this'])
+			' search bar doesn\'t need you to get the keywords exactly right, only '
+			h(:em, ['close enough'])
+			' to what startups are building, to find them.'
+		])
+		h(:p, [
+			'You can search for something very specific like "3D modeling for
+			home design" or something very broad like "climate change." Here
+			are a few starting places:'
+		])
+		h(:div, ['welcome-examples'], {
+			Examples |> with map() fn(ex) h(:button, ['welcome-example-button'], {}, {
+				click: fn {
+					State.search.query := ex
+					submitSearch()
+				}
+			}, [ex])
+		})
+		h(:button, ['welcome-hide-button'], {}, {
+			click: fn {
+				hideWelcome()
+				render()
+			}
+		}, [])
+	])
+}
+
+fn Company(company) {
+	id := company.slug
+	expanded? := State.search.expandedCompanies |> contains?(id)
+	h(:div, [
+		'company'
+		if expanded? {
+			true -> 'company-expanded'
+			_ -> 'company-collapsed'
+		}
+		if company.status {
+			'Acquired' -> 'company-acquired'
+			'Active' -> 'company-active'
+			'Inactive' -> 'company-inactive'
+			'Public' -> 'company-public'
+		}
+	], {}, {
+		click: fn {
+			if expanded? {
+				false -> {
+					State.search.expandedCompanies << id
+					if State.news.(id) = ? -> with search.news(cleanName(company.name)) fn(stories) {
+						State.news.(id) := stories
+						render()
+					}
+				}
+				_ -> State.search.expandedCompanies := State.search.expandedCompanies |> filter(fn(c) c != id)
+			}
+			render()
+		}
+	}, [
+		h(:div, ['company-name-batch'], [
+			if imgSrc := company.small_logo_thumb_url {
+				?, '', '/avatars/thumb/missing.png' -> h(:div, ['company-img', 'missing'], [])
+				_ -> h(:img, ['company-img'], { src: imgSrc }, [])
+			}
+			h(:div, ['company-name'], [
+				h(:a, ['primary-name'], {
+					href: company.website
+					target: '_blank'
+				}, {
+					click: fn(evt) evt.stopPropagation()
+				}, [cleanName(company.name)])
+			])
+			h(:div, ['company-batch'], [company.batch])
+		])
+		h(:div, ['company-description'], [
+			h(:p, [], [
+				if expanded? {
+					true -> if long := company.long_description |> trim() {
+						?, '' -> company.one_liner
+						_ -> long
+					}
+					_ -> if one := company.one_liner |> trim() {
+						?, '' -> company.long_description |> take(80) + '...'
+						_ -> one
+					}
+				}
+			])
+			if company.former_names != [] -> h(:div, ['former-names'], {
+				['Formerly: '] |> append(
+					company.former_names |> with map() fn(name) h(:span, ['former-name'], [name])
+				)
+			})
+			if expanded? -> if news := State.news.(id) {
+				? -> h(:div, ['loading'], ['loading...'])
+				[] -> ?
+				_ -> h(:div, ['company-news'], [
+					h(:div, ['company-news-header'], ['From Hacker News'])
+					h(:ul, ['company-news-list'], {
+						news |> with map() fn(story) h(:li, ['company-news-item'], {}, {
+							click: fn(evt) evt.stopPropagation()
+						}, [
+							Link(
+								h(:span, [], [
+									story.title
+									if story.url {
+										?, '' -> ?
+										_ -> h(:span, ['company-news-hostname'], [
+											new(URL, story.url).hostname |> trimStart('www.')
+										])
+									}
+								])
+								if url := story.url {
+									?, '' -> 'https://news.ycombinator.com/item?id=' + story.objectID
+									_ -> url
+								}
+								'company-news-link'
+							)
+							h(:div, ['company-news-meta'], [
+								h(:span, ['company-news-date'], [
+									new(Date, story.created_at).toLocaleDateString()
+								])
+								' · '
+								h(:span, ['company-news-points'], [story.points, if story.points {
+									1 -> ' point'
+									_ -> ' points'
+								}])
+								' · '
+								h(:span, ['company-news-comments'], [story.num_comments, if story.num_comments {
+									1 -> ' comment'
+									_ -> ' comments'
+								}])
+							])
+						])
+					})
+				])
+			}
+		])
+	])
+}
+
+fn CompanyList(companies) {
+	h(:ul, ['search-results-list'], {
+		companies |> with map() fn(company) h(:li, ['search-results-item'], [
+			Company(company)
+		])
+	})
+}
+
+fn render {
+	document.body.className := State.colorscheme
+
+	with r.update() h(:div, ['app'], [
+		h(:header, [], [
+			h(:a, ['logo'], { href: '/' }, {}, [
+				'YC Vibe Check'
+			])
+			h(:nav, [], [
+				h(:button, ['colorscheme-button', 'colorscheme-' + State.colorscheme], {
+					title: if State.colorscheme {
+						'light' -> 'Dark mode'
+						'dark' -> 'Light mode'
+					}
+				}, {
+					click: fn {
+						toggleColorScheme()
+						render()
+					}
+				}, [])
+				h(:button, ['about-button'], {}, {
+					click: fn {
+						State.showWelcome? := true
+						localStorage.removeItem('should_show_welcome')
+						render()
+					}
+				}, ['about'])
+				Link('github', 'https://github.com/thesephist/ycvibecheck', 'github-button')
+			])
+		])
+		h(:main, [
+			if State.showWelcome? -> WelcomeMessage()
+			h(:form, ['search-form'], {}, {
+				submit: fn(evt) {
+					evt.preventDefault()
+					submitSearch()
+				}
+			}, [
+				h(:div, ['search-input-row'], [
+					h(:input, ['search-input'], {
+						type: 'text'
+						value: State.search.query
+						placeholder: 'Pitch your idea...'
+						autofocus: true
+					}, {
+						input: fn(evt) {
+							State.search.query := evt.target.value
+							render()
+						}
+					}, [])
+					h(:button, ['search-button'], { title: 'Submit search' }, ['Search'])
+				])
+				h(:div, ['search-filter-row'], [
+					h(:label, ['search-filter-batch'], [
+						h(:select, [], {}, {
+							change: fn(evt) {
+								State.search.batch := if batch := evt.target.value {
+									'' -> ?
+									_ -> batch
+								}
+								submitSearch()
+							}
+						}, {
+							allBatches := h(:option, [], {
+								value: ''
+								selected: ? = State.search.batch
+							}, ['All batches'])
+							batches := Batches |> with map() fn(batch) {
+								h(:option, [], {
+									value: batch
+									selected: batch = State.search.batch
+								}, [batch])
+							}
+
+							[allBatches] |> append(batches)
+						})
+					])
+					h(:label, ['search-filter-active'], [
+						h(:input, [], {
+							type: 'checkbox'
+							checked: State.search.show_inactive
+						}, {
+							change: fn(evt) {
+								State.search.show_inactive := evt.target.checked
+								submitSearch()
+							}
+						}, [])
+						h(:span, ['desktop'], ['Show inactive companies'])
+						h(:span, ['mobile'], ['Show inactives'])
+					])
+				])
+			])
+			h(:div, ['search-results'], [
+				if State.search.loading? {
+					true -> h(:div, ['loading', 'loading-search'], ['loading...'])
+					_ -> CompanyList(State.results)
+				}
+			])
+		])
+		h(:footer, [], [
+			h(:p, [], [
+				'Project by '
+				Link('Linus', 'https://thesephist.com')
+				', powered by '
+				Link('Oak', 'https://oaklang.org')
+				' and '
+				Link('Torus', 'https://github.com/thesephist/torus')
+				'. Data sourced from '
+				Link('yc_company_scraper', 'https://github.com/akshaybhalotia/yc_company_scraper')
+				' and semantic search made possible with '
+				Link('sentence-transformers', 'https://www.sbert.net/')
+				'.'
+			])
+			h(:p, [], [
+				'Last updated April 2022, up to W22 batch. '
+				Link('Submit an update.', 'https://github.com/thesephist/ycvibecheck')
+			])
+		])
+	])
+}
+
+render()
+submitSearch()
+
