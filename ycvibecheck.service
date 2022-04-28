@@ -1,0 +1,13 @@
+[Unit]
+Description=YC Vibe Check
+After=network.target
+
+[Service]
+User=ycvibecheck-user
+Group=www-data
+WorkingDirectory=/home/ycvibecheck-user/ycvibecheck
+ExecStart=/home/ycvibecheck-user/ycvibecheck/.venv/bin/uwsgi --ini app.ini
+
+[Install]
+WantedBy=multi-user.target
+
