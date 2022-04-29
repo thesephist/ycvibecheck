@@ -21,15 +21,6 @@ search := import('../lib/search.js')
 
 MaxAutocompletes := 12
 
-Batches := [
-	'S21', 'W21'
-	'S20', 'W20'
-	'S19', 'W19'
-	'S18', 'W18'
-	'S17', 'W17'
-	'S16', 'W16'
-]
-
 // TODO: how do we keep this project updated?
 // maybe an update script that just fetches the file from the
 // github? and a place in the footer of th epage or something that
@@ -135,7 +126,12 @@ fn autocompleteVisible? {
 
 r := Renderer('#root')
 
-fn Link(text, href, classes...) h(:a, classes, { href: href, target: '_blank' }, [text])
+fn Link(text, href, classes...) h(:a, classes, {
+	href: href
+	target: '_blank'
+}, {
+	click: fn(evt) evt.stopPropagation()
+}, [text])
 
 fn WelcomeMessage {
 	Examples := [
@@ -256,7 +252,7 @@ fn Company(company) {
 			'Public' -> 'company-public'
 		}
 	], { tabIndex: 0 }, {
-		click: toggle
+		click: fn(evt) if evt.target.tagName != 'A' -> toggle()
 		keypress: fn(evt) if evt.key = 'Enter' -> toggle()
 	}, [
 		h(:div, ['company-name-batch'], [
@@ -269,8 +265,6 @@ fn Company(company) {
 					h(:a, ['primary-name'], {
 						href: company.website
 						target: '_blank'
-					}, {
-						click: fn(evt) evt.stopPropagation()
 					}, [cleanName(company.name)])
 				])
 				h(:div, ['company-batch'], [company.batch])
@@ -318,9 +312,7 @@ fn Company(company) {
 				_ -> h(:div, ['company-news'], [
 					h(:div, ['company-news-header'], ['From the YC Directory'])
 					h(:ul, ['company-news-list'], {
-						news |> with map() fn(story) h(:li, ['company-news-item'], {}, {
-							click: fn(evt) evt.stopPropagation()
-						}, [
+						news |> with map() fn(story) h(:li, ['company-news-item'], [
 							Link(
 								h(:span, [], [
 									story.title
@@ -343,9 +335,7 @@ fn Company(company) {
 				_ -> h(:div, ['company-news'], [
 					h(:div, ['company-news-header'], ['From Hacker News'])
 					h(:ul, ['company-news-list'], {
-						news |> with map() fn(story) h(:li, ['company-news-item'], {}, {
-							click: fn(evt) evt.stopPropagation()
-						}, [
+						news |> with map() fn(story) h(:li, ['company-news-item'], [
 							Link(
 								h(:span, [], [
 									story.title
@@ -555,7 +545,7 @@ fn render {
 								value: ''
 								selected: ? = State.search.batch
 							}, ['All batches'])
-							batches := Batches |> with map() fn(batch) {
+							batches := YC_BATCHES |> with map() fn(batch) {
 								h(:option, [], {
 									value: batch
 									selected: batch = State.search.batch

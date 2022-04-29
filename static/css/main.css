@@ -603,6 +603,7 @@ li.search-results-item {
 	transition: background .1s;
     margin: 0;
     margin-top: 12px;
+    margin-bottom: 8px;
 }
 
 .company .more-like-this-button:hover {
@@ -689,6 +690,14 @@ footer a:hover {
         display: initial;
     }
 
+	/* autocomplete dropdown positioning */
+	form .search-autocomplete-group {
+		position: initial;
+	}
+	form .search-input-row {
+		position: relative;
+	}
+
     .company {
         flex-direction: column;
         gap: 2px;
@@ -718,12 +727,8 @@ footer a:hover {
 		padding-left: 0;
 	}
 
-	/* autocomplete dropdown positioning */
-	form .search-autocomplete-group {
-		position: initial;
-	}
-	form .search-input-row {
-		position: relative;
-	}
+    .company .more-like-this-button {
+        margin-bottom: 0;
+    }
 }
 
