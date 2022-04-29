@@ -1,7 +1,7 @@
 html,
 body {
-	margin: 0;
-	padding: 0;
+    margin: 0;
+    padding: 0;
 }
 
 body {
@@ -53,12 +53,12 @@ input,
 textarea,
 select,
 button {
-	font-family: system-ui, sans-serif;
+    font-family: system-ui, sans-serif;
 }
 
 #root,
 .app {
-	width: 100%;
+    width: 100%;
 }
 
 header,
@@ -82,19 +82,19 @@ header {
 }
 
 header a.logo {
-	font-weight: bold;
-	color: var(--primary-text);
-	text-decoration: none;
+    font-weight: bold;
+    color: var(--primary-text);
+    text-decoration: none;
 }
 
 header a.logo:hover,
 header a.logo:hover .logo-subtitle {
-	text-decoration: underline;
+    text-decoration: underline;
 }
 
 header a.logo .logo-subtitle {
-	font-weight: bold;
-	color: var(--secondary-text);
+    font-weight: bold;
+    color: var(--secondary-text);
 }
 
 header .colorscheme-button {
@@ -143,12 +143,12 @@ header .about-button:hover {
 }
 
 header a.github-button {
-	color: var(--primary-text);
-	text-decoration: none;
+    color: var(--primary-text);
+    text-decoration: none;
 }
 
 header a.github-button:hover {
-	text-decoration: underline;
+    text-decoration: underline;
 }
 
 .welcome {
@@ -178,14 +178,14 @@ header a.github-button:hover {
 .welcome-examples {
     float: left;
     width: 100%;
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	gap: 8px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .welcome-example-button {
-	padding: 4px 10px;
+    padding: 4px 10px;
     font-size: 1em;
     background: var(--primary-bg);
     cursor: pointer;
@@ -208,8 +208,8 @@ header a.github-button:hover {
 
 .welcome-example-button:active,
 .welcome-example-button.example-selected {
-	color: var(--accenter);
-	border: 2px solid var(--accenter);
+    color: var(--accenter);
+    border: 2px solid var(--accenter);
 }
 
 .welcome-hide-button {
@@ -244,102 +244,102 @@ form {
 form .search-autocomplete-group {
     width: 0;
     flex-grow: 1;
-	position: relative;
+    position: relative;
 }
 
 .search-autocomplete {
-	position: absolute;
-	z-index: 5;
-	top: calc(100% + 8px);
-	left: 0;
-	right: 0;
-	width: 100%;
-	max-height: calc(100vh - 64px);
-	background: var(--primary-bg);
-	border-radius: 6px;
-	box-shadow: 0 6px 36px -2px var(--shadow-soft);
-	overflow: hidden;
-	transition: opacity .3s, transform .3s;
-	transform-origin: top center;
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: calc(100vh - 64px);
+    background: var(--primary-bg);
+    border-radius: 6px;
+    box-shadow: 0 6px 36px -2px var(--shadow-soft);
+    overflow: hidden;
+    transition: opacity .3s, transform .3s;
+    transform-origin: top center;
 }
 
 .search-autocomplete.show {
-	opacity: 1;
-	transform: translate(0, 0);
+    opacity: 1;
+    transform: translate(0, 0);
 }
 
 .search-autocomplete.hide {
-	opacity: 0;
-	transform: translate(0, -12px) scaleY(0.7);
+    opacity: 0;
+    transform: translate(0, -12px) scaleY(0.7);
 }
 
 .search-autocomplete .autocomplete-suggestion {
-	padding: 8px 12px;
-	cursor: pointer;
+    padding: 8px 12px;
+    cursor: pointer;
 }
 
 .search-autocomplete .autocomplete-suggestion.selected,
 .search-autocomplete .autocomplete-suggestion:hover {
-	background: var(--hover-bg);
+    background: var(--hover-bg);
 }
 
 .search-autocomplete .autocomplete-suggestion:active {
-	background: var(--active-bg);
+    background: var(--active-bg);
 }
 
 .search-autocomplete .autocomplete-suggestion-desc {
-	margin-left: 8px;
-	color: var(--secondary-text);
+    margin-left: 8px;
+    color: var(--secondary-text);
 }
 
 .search-autocomplete .autocomplete-suggestion-name,
 .search-autocomplete .autocomplete-suggestion-desc {
-	white-space: nowrap;
-	overflow: hidden;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 form .search-input,
 form .search-button,
 form select {
-	border: 0;
+    border: 0;
     color: inherit;
-	font-size: 1em;
-	padding: 8px 12px;
-	border-radius: 6px;
-	background: var(--secondary-bg);
+    font-size: 1em;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--secondary-bg);
 }
 
 form .search-input:focus {
-	outline: 0;
-	background: var(--hover-bg);
+    outline: 0;
+    background: var(--hover-bg);
 }
 
 form .search-button {
-	color: var(--primary-bg);
-	background: var(--primary-text);
-	transition: background .1s;
-	cursor: pointer;
+    color: var(--primary-bg);
+    background: var(--primary-text);
+    transition: background .1s;
+    cursor: pointer;
 }
 
 form .search-button:hover {
-	background: var(--secondary-text);
+    background: var(--secondary-text);
 }
 
 form select {
-	cursor: pointer;
+    cursor: pointer;
 }
 
 form select:focus,
 form select:hover {
-	background: var(--hover-bg);
+    background: var(--hover-bg);
 }
 
 form label {
-	cursor: pointer;
+    cursor: pointer;
 }
 
 form input[type=checkbox] {
-	margin-right: 6px;
+    margin-right: 6px;
 }
 
 .search-input-row,
@@ -356,63 +356,63 @@ form input[type=checkbox] {
 }
 
 .search-input-row input {
-	width: 100%;
-	box-sizing: border-box;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 ul.search-results-list {
-	padding-left: 0;
+    padding-left: 0;
 }
 
 li.search-results-item {
-	list-style: none;
-	margin: 2px 0;
+    list-style: none;
+    margin: 2px 0;
 }
 
 .company {
-	line-height: 1.5em;
-	display: flex;
-	flex-direction: row;
-	align-items: flex-start;
-	gap: 12px;
-	border-radius: 4px;
-	cursor: pointer;
-	padding: 2px;
+    line-height: 1.5em;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px;
     box-sizing: border-box;
-	transition: transform .2s;
+    transition: transform .2s;
 }
 
 .company:hover {
-	background: var(--secondary-bg);
+    background: var(--secondary-bg);
 }
 
 .company:active {
-	transform: translate(0, 2px);
+    transform: translate(0, 2px);
 }
 
 .company.company-expanded {
-	background: var(--secondary-bg);
-	position: relative;
-	width: calc(100% + 24px);
-	top: 0;
-	left: -12px;
-	padding: 8px;
+    background: var(--secondary-bg);
+    position: relative;
+    width: calc(100% + 24px);
+    top: 0;
+    left: -12px;
+    padding: 8px;
 }
 
 .company.company-inactive:not(.company-expanded) {
-	opacity: .5;
+    opacity: .5;
 }
 
 .company.company-inactive .company-name {
-	text-decoration: line-through;
+    text-decoration: line-through;
 }
 
 .company.company-inactive .company-img {
-	filter: grayscale(1);
+    filter: grayscale(1);
 }
 
 .company .company-name-batch {
-	min-width: 24ch;
+    min-width: 24ch;
 }
 
 .company .company-name-batch-header {
@@ -423,10 +423,10 @@ li.search-results-item {
 }
 
 .company .company-name-batch-meta {
-	width: 24ch; /* matching parent */
-	box-sizing: border-box;
-	padding-left: 32px;
-	margin-top: 8px;
+    width: 24ch; /* matching parent */
+    box-sizing: border-box;
+    padding-left: 32px;
+    margin-top: 8px;
 }
 
 .label {
@@ -440,28 +440,28 @@ li.search-results-item {
 }
 
 .company .company-name-batch-tags {
-	display: flex;
-	flex-direction: row;
-	flex-wrap: wrap;
-	gap: 6px;
-	margin-top: 16px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 16px;
     margin-bottom: 8px;
 }
 
 .tag {
-	display: flex;
+    display: flex;
     flex-direction: row;
     align-items: center;
-	background: var(--active-bg);
-	border-radius: 3px;
-	font-size: calc(1em - 4px);
-	margin: 0;
+    background: var(--active-bg);
+    border-radius: 3px;
+    font-size: calc(1em - 4px);
+    margin: 0;
     overflow: hidden;
 }
 
 .tag .tag-type,
 .tag .tag-value {
-	padding: 3px 8px;
+    padding: 3px 8px;
     line-height: 1.3em;
 }
 
@@ -471,7 +471,7 @@ li.search-results-item {
 
 .tag .tag-value {
     color: var(--primary-bg);
-	background: var(--secondary-text);
+    background: var(--secondary-text);
 }
 
 .tag .tag-type + .tag-value {
@@ -479,117 +479,117 @@ li.search-results-item {
 }
 
 .company-name-batch-links {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 8px;
-	margin: 16px 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0;
 }
 
 .external-link {
-	display: block;
-	border-radius: 4px;
-	height: 24px;
-	width: 24px;
-	cursor: pointer;
-	background-repeat: no-repeat;
-	background-size: cover;
+    display: block;
+    border-radius: 4px;
+    height: 24px;
+    width: 24px;
+    cursor: pointer;
+    background-repeat: no-repeat;
+    background-size: cover;
 }
 
 .external-link:hover {
-	opacity: .7;
+    opacity: .7;
 }
 
 .company .company-name {
-	flex-grow: 1;
+    flex-grow: 1;
 }
 
 .company .company-img {
-	display: block;
-	height: calc(1em + 4px);
-	width: calc(1em + 4px);
-	margin: 2px 0 2px 2px;
-	border-radius: 3px;
+    display: block;
+    height: calc(1em + 4px);
+    width: calc(1em + 4px);
+    margin: 2px 0 2px 2px;
+    border-radius: 3px;
 }
 
 .company a.primary-name {
-	color: var(--primary-text);
-	text-decoration: none;
-	font-weight: bold;
+    color: var(--primary-text);
+    text-decoration: none;
+    font-weight: bold;
 }
 
 .company a.primary-name:hover {
-	text-decoration: underline;
+    text-decoration: underline;
 }
 
 .company .company-batch {
-	width: 4ch;
-	color: var(--secondary-text);
-	font-variant-numeric: tabular-nums;
+    width: 4ch;
+    color: var(--secondary-text);
+    font-variant-numeric: tabular-nums;
 }
 
 .company .company-description p {
-	margin: 0;
-	max-width: 64ch;
-	white-space: pre-wrap;
+    margin: 0;
+    max-width: 64ch;
+    white-space: pre-wrap;
 }
 
 .company .former-names {
-	font-size: calc(1em - 4px);
-	color: var(--secondary-text);
+    font-size: calc(1em - 4px);
+    color: var(--secondary-text);
 }
 
 .company .former-name::before {
-	content: ' / '
+    content: ' / '
 }
 
 .company .former-name:first-child::before {
-	content: none;
+    content: none;
 }
 
 .company .company-news {
-	margin-top: 12px;
+    margin-top: 12px;
 }
 
 .company .company-news-header {
-	font-weight: bold;
+    font-weight: bold;
 }
 
 .company ul.company-news-list {
-	padding-left: 0;
+    padding-left: 0;
 }
 
 .company li.company-news-item {
-	list-style: none;
-	margin: 4px 0;
+    list-style: none;
+    margin: 4px 0;
 }
 
 .company a.company-news-link {
-	text-decoration: none;
-	color: var(--primary-text);
+    text-decoration: none;
+    color: var(--primary-text);
 }
 
 .company a.company-news-link:hover {
-	text-decoration: underline;
+    text-decoration: underline;
 }
 
 .company a.company-news-link:visited {
-	color: var(--secondary-text);
+    color: var(--secondary-text);
 }
 
 .company .company-news-hostname {
-	white-space: nowrap;
-	margin-left: 8px;
+    white-space: nowrap;
+    margin-left: 8px;
 }
 
 .company .company-news-meta,
 .company .company-news-hostname {
-	font-size: calc(1em - 4px);
-	color: var(--secondary-text);
+    font-size: calc(1em - 4px);
+    color: var(--secondary-text);
 }
 
 .company .company-news-meta {
-	margin-top: -5px;
+    margin-top: -5px;
 }
 
 .company .more-like-this-button {
@@ -600,33 +600,33 @@ li.search-results-item {
     border-radius: 6px;
     border: 0;
     color: var(--primary-text);
-	transition: background .1s;
+    transition: background .1s;
     margin: 0;
     margin-top: 12px;
     margin-bottom: 8px;
 }
 
 .company .more-like-this-button:hover {
-	background: var(--hover-bg);
+    background: var(--hover-bg);
 }
 
 .company .more-like-this-button:active {
-	background: var(--active-bg);
+    background: var(--active-bg);
 }
 
 footer {
-	margin-top: 32px;
+    margin-top: 32px;
     margin-bottom: 52px;
 }
 
 footer p {
-	max-width: 64ch;
-	color: var(--secondary-text);
-	line-height: 1.5em;
+    max-width: 64ch;
+    color: var(--secondary-text);
+    line-height: 1.5em;
 }
 
 footer a {
-	color: inherit;
+    color: inherit;
 }
 
 footer a:hover {
@@ -641,7 +641,7 @@ footer a:hover {
     height: 3px;
     position: relative;
     background: var(--secondary-text);
-	color: transparent;
+    color: transparent;
     overflow: hidden;
 }
 
@@ -668,7 +668,7 @@ footer a:hover {
 }
 
 .loading.loading-search {
-	margin: 64px auto;
+    margin: 64px auto;
 }
 
 .mobile {
@@ -690,13 +690,13 @@ footer a:hover {
         display: initial;
     }
 
-	/* autocomplete dropdown positioning */
-	form .search-autocomplete-group {
-		position: initial;
-	}
-	form .search-input-row {
-		position: relative;
-	}
+    /* autocomplete dropdown positioning */
+    form .search-autocomplete-group {
+        position: initial;
+    }
+    form .search-input-row {
+        position: relative;
+    }
 
     .company {
         flex-direction: column;
@@ -723,9 +723,9 @@ footer a:hover {
         flex-grow: 1;
     }
 
-	.company .company-name-batch-meta {
-		padding-left: 0;
-	}
+    .company .company-name-batch-meta {
+        padding-left: 0;
+    }
 
     .company .more-like-this-button {
         margin-bottom: 0;
