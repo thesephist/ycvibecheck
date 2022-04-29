@@ -6,6 +6,7 @@
 	append: append
 	filter: filter
 	compact: compact
+	indexOf: indexOf
 	contains?: contains?
 } := import('std')
 {
@@ -72,6 +73,9 @@ fn performSearch {
 	State.news := {}
 	render()
 
+	// blur away from input field
+	if ? != searchInput := document.querySelector('.search-input') -> searchInput.blur()
+
 	// update URLSearchParams
 	url := new(URL, location.href)
 	searchParams := url.searchParams
@@ -88,6 +92,9 @@ fn performSearch {
 		State.search.loading? := false
 		State.results := companies
 		render()
+
+		// focus on first result, if exists
+		if ? != company := document.querySelector('.company') -> company.focus()
 	}
 }
 
@@ -233,7 +240,7 @@ fn ExternalLink(type, url) if url {
 	}, [string(type)])
 }
 
-fn Company(company) {
+fn Company(company, index) {
 	id := company.slug
 	expanded? := State.search.expandedCompanies |> contains?(id)
 	scraped := State.scrapes.(id) |> default({})
@@ -272,6 +279,24 @@ fn Company(company) {
 	], { tabIndex: 0 }, {
 		click: fn(evt) if evt.target.tagName != 'A' -> toggle()
 		keypress: fn(evt) if evt.key = 'Enter' -> toggle()
+		keydown: fn(evt) if evt.key {
+			'ArrowUp' -> {
+				evt.preventDefault()
+				companyEls := Array.from(document.querySelectorAll('.company'))
+				if ? != prev := companyEls.(index - 1) -> {
+					prev.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })
+					prev.focus()
+				}
+			}
+			'ArrowDown' -> {
+				evt.preventDefault()
+				companyEls := Array.from(document.querySelectorAll('.company'))
+				if ? != next := companyEls.(index + 1) -> {
+					next.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })
+					next.focus()
+				}
+			}
+		}
 	}, [
 		h(:div, ['company-name-batch'], [
 			h(:div, ['company-name-batch-header'], [
@@ -405,8 +430,8 @@ fn Company(company) {
 
 fn CompanyList(companies) {
 	h(:ul, ['search-results-list'], {
-		companies |> with map() fn(company) h(:li, ['search-results-item'], [
-			Company(company)
+		companies |> with map() fn(company, i) h(:li, ['search-results-item'], [
+			Company(company, i)
 		])
 	})
 }
