@@ -13,5 +13,5 @@ def company(slug):
             return companyData
     except Exception as e:
         print('Error while scraping (may indicate out-of-date scraping logic):', e)
-        return {}
+        return None
 

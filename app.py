@@ -38,7 +38,10 @@ def get_company():
     if not slug:
         return jsonify(None)
 
-    return scrape_company(slug)
+    scraped = scrape_company(slug)
+    if scraped:
+        return jsonify(scraped)
+    return f'Could not find company metadata for "{slug}"', 500
 
 @app.route('/preloads.js', methods=['GET'])
 def get_preloads_js():
