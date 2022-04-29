@@ -407,10 +407,14 @@ fn Company(company, index) {
 									_ -> ' points'
 								}])
 								' · '
-								h(:span, ['company-news-comments'], [story.num_comments, if story.num_comments {
-									1 -> ' comment'
-									_ -> ' comments'
-								}])
+								Link(
+									h(:span, ['company-news-comments'], [story.num_comments, if story.num_comments {
+										1 -> ' comment'
+										_ -> ' comments'
+									}])
+									'https://news.ycombinator.com/item?id=' + story.objectID
+									'company-news-meta-link'
+								)
 							])
 						])
 					})
