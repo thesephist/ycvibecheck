@@ -8,6 +8,11 @@ yc_companies = []
 with open('data/yc-embedded.json', 'r') as embeddings_file:
     yc_companies = [co for co in json.load(embeddings_file) if co.get('description_embedding')]
 
+all_yc_names_and_desc = [[co['name'], co['one_liner'] or co['long_description']] for co in yc_companies]
+
+def all_names_desc():
+    return all_yc_names_and_desc
+
 def similarity(x, y):
     return cosine(x, y)
 

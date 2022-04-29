@@ -1,7 +1,12 @@
+import json
 from flask import Flask, request, jsonify, send_from_directory
-from server.search import search, all as all_companies
+from server.search import search, all as all_companies, all_names_desc
+from server.scrape import company as scrape_company
 
-app = Flask(__name__, static_url_path='/', static_folder='static')
+app = Flask(__name__,
+        static_url_path='/',
+        static_folder='static',
+        template_folder='static')
 app.config['JSON_AS_ASCII'] = False
 
 @app.route('/search', methods=['GET'])
@@ -15,7 +20,7 @@ def semantic_search():
     except:
         pass
 
-    if text == '':
+    if not text:
         companies = all_companies()
     else:
         companies = search(text)
@@ -26,6 +31,18 @@ def semantic_search():
         companies = [co for co in companies if co['batch'] == batch]
 
     return jsonify(companies[:n])
+
+@app.route('/company', methods=['GET'])
+def get_company():
+    slug = request.args.get('slug')
+    if not slug:
+        return jsonify(None)
+
+    return scrape_company(slug)
+
+@app.route('/yc_names_desc.js', methods=['GET'])
+def get_preload_js():
+    return f'const YC_NAMES_DESC = {json.dumps(all_names_desc())};'
 
 @app.route('/', methods=['GET'])
 def index():
