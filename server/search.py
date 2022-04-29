@@ -11,7 +11,13 @@ with open('data/yc-embedded.json', 'r') as embeddings_file:
     yc_companies.sort(key=lambda co: co['batch'], reverse=True)
     yc_companies.sort(key=lambda co: 0 if co['top_company'] else 1)
 
+all_yc_batches = list(set(co['batch'] for co in yc_companies))
+all_yc_batches.sort(reverse=True)
+
 all_yc_names_and_desc = [[co['name'], co['one_liner'] or co['long_description']] for co in yc_companies]
+
+def all_batches():
+    return all_yc_batches
 
 def all_names_desc():
     return all_yc_names_and_desc

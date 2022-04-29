@@ -1,6 +1,6 @@
 import json
 from flask import Flask, request, jsonify, send_from_directory
-from server.search import search, all as all_companies, all_names_desc
+from server.search import search, all as all_companies, all_names_desc, all_batches
 from server.scrape import company as scrape_company
 
 app = Flask(__name__,
@@ -40,9 +40,11 @@ def get_company():
 
     return scrape_company(slug)
 
-@app.route('/yc_names_desc.js', methods=['GET'])
-def get_preload_js():
-    return f'const YC_NAMES_DESC = {json.dumps(all_names_desc())};'
+@app.route('/preloads.js', methods=['GET'])
+def get_preloads_js():
+    batches = f'const YC_BATCHES = {json.dumps(all_batches())};'
+    names = f'const YC_NAMES_DESC = {json.dumps(all_names_desc())};'
+    return '\n'.join([batches, names])
 
 @app.route('/', methods=['GET'])
 def index():
