@@ -55,6 +55,7 @@ State := {
 	// cache of information scraped from YC directory, /company?slug=<company>
 	scrapes: {}
 	results: []
+	error: ?
 	colorscheme: if localStorage.getItem('colorscheme') {
 		'dark' -> 'dark'
 		_ -> 'light'
@@ -133,6 +134,20 @@ fn Link(text, href, classes...) h(:a, classes, {
 	click: fn(evt) evt.stopPropagation()
 }, [text])
 
+fn ErrorMessage(msg) {
+	h(:div, ['error-message'], {}, {
+		click: fn {
+			State.error := ?
+			render()
+		}
+	}, [
+		h(:div, ['error-message-content'], [
+			h(:span, ['error-message-title'], ['Something went wrong: '])
+			h(:span, ['error-message-text'], [msg])
+		])
+	])
+}
+
 fn WelcomeMessage {
 	Examples := [
 		'AI safety'
@@ -206,14 +221,17 @@ fn Label(type, text) h(:div, ['label'], [
 	h(:div, ['label-value'], [text])
 ])
 
-fn ExternalLink(type, url) h(:a, ['external-link'], {
-	href: url
-	target: '_blank'
-	style: {
-		color: 'transparent'
-		'background-image': 'url("/img/icon-' + string(type) + '.png")'
-	}
-}, [string(type)])
+fn ExternalLink(type, url) if url {
+	?, '' -> ?
+	_ -> h(:a, ['external-link'], {
+		href: url
+		target: '_blank'
+		style: {
+			color: 'transparent'
+			'background-image': 'url("/img/icon-' + string(type) + '.png")'
+		}
+	}, [string(type)])
+}
 
 fn Company(company) {
 	id := company.slug
@@ -276,16 +294,17 @@ fn Company(company) {
 				if scrapedCompany.year_founded != ? -> Label('Founded', scrapedCompany.year_founded)
 				if [] != tagEls := {
 					topCoTag := if company.top_company -> Tag('Yes', 'Top Company')
+					npoTag := if company.nonprofit -> Tag('Nonprofit')
 					genericTags := company.tags |> map(fn(t) Tag(t))
 
-					[topCoTag] |> append(genericTags) |> compact()
+					[topCoTag, npoTag] |> append(genericTags) |> compact()
 				} -> h(:div, ['company-name-batch-tags'], tagEls)
 				h(:div, ['company-name-batch-links'], [
 					ExternalLink(:yc, 'https://www.ycombinator.com/companies/' + company.slug)
-					if scrapedCompany.cb_url != ? -> ExternalLink(:crunchbase, scrapedCompany.cb_url)
-					if scrapedCompany.linkedin_url != ? -> ExternalLink(:linkedin, scrapedCompany.linkedin_url)
-					if scrapedCompany.twitter_url != ? -> ExternalLink(:twitter, scrapedCompany.twitter_url)
-					if scrapedCompany.fb_url != ? -> ExternalLink(:facebook, scrapedCompany.fb_url)
+					ExternalLink(:crunchbase, scrapedCompany.cb_url)
+					ExternalLink(:linkedin, scrapedCompany.linkedin_url)
+					ExternalLink(:twitter, scrapedCompany.twitter_url)
+					ExternalLink(:facebook, scrapedCompany.fb_url)
 				])
 			])
 		])
@@ -333,7 +352,7 @@ fn Company(company) {
 			if expanded? -> if news := State.news.(id) {
 				?, [] -> ?
 				_ -> h(:div, ['company-news'], [
-					h(:div, ['company-news-header'], ['From Hacker News'])
+					h(:div, ['company-news-header'], ['"' + company.name + '" on Hacker News'])
 					h(:ul, ['company-news-list'], {
 						news |> with map() fn(story) h(:li, ['company-news-item'], [
 							Link(
@@ -372,14 +391,14 @@ fn Company(company) {
 				])
 			}
 			// loading spinner for both news feeds
-			if expanded? & (scraped.newsItems = ? | State.news.(id) = ?) ->
+			if expanded? & (scraped = ? | State.news.(id) = ?) ->
 				h(:div, ['loading'], ['loading...'])
 			if expanded? -> h(:button, ['more-like-this-button'], {}, {
 				click: fn {
 					State.search.query := company.long_description |> default(company.one_liner)
 					performSearch()
 				}
-			}, ['More like this company →'])
+			}, ['More companies like this →'])
 		])
 	])
 }
@@ -396,6 +415,7 @@ fn render {
 	document.body.className := State.colorscheme
 
 	with r.update() h(:div, ['app'], [
+		if State.error != ? -> ErrorMessage(State.error)
 		h(:header, [], [
 			h(:a, ['logo'], { href: '/' }, {}, [
 				'YC Vibe Check'
@@ -605,6 +625,11 @@ with document.body.addEventListener('keydown') fn(evt) if evt.key {
 		searchInput.focus()
 	}
 }
+
+search.setErrorHandler(fn setError(msg) {
+	State.error := msg
+	render()
+})
 
 render()
 performSearch()

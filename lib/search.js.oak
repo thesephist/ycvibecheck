@@ -14,6 +14,14 @@
 fmt := import('fmt')
 sort := import('sort')
 
+// NOTE: dummy, should be overridden by setErrorHandler below to set a global
+// error reporter
+fn setError {}
+
+fn setErrorHandler(f) {
+	setError <- f
+}
+
 fn queryEncode(opts) entries(opts) |>
 	filter(fn(entry) entry.1 != ?) |>
 	map(fn(entry) entry.0 + '=' + encodeURIComponent(entry.1)) |>
@@ -21,7 +29,8 @@ fn queryEncode(opts) entries(opts) |>
 
 fn company(slug, withData) {
 	fn handleError(err) {
-		withData(?)
+		setError(String(err))
+		withData({})
 	}
 
 	fetch('/company?' + queryEncode({ slug: slug })).then(
@@ -29,7 +38,9 @@ fn company(slug, withData) {
 			200 -> with resp.json().then() fn(data) {
 				withData(data)
 			}
-			_ -> handleError
+			_ -> with resp.text().then() fn(respText) {
+				handleError(new(Error, respText))
+			}
 		}
 		handleError
 	)
@@ -41,7 +52,8 @@ fn similar(query, withData) {
 	})
 
 	fn handleError(err) {
-		withData(?)
+		setError(String(err))
+		withData([])
 	}
 
 	fetch('/search?' + queryEncode(query)).then(
@@ -49,7 +61,9 @@ fn similar(query, withData) {
 			200 -> with resp.json().then() fn(data) {
 				withData(data)
 			}
-			_ -> handleError
+			_ -> with resp.text().then() fn(respText) {
+				handleError(new(Error, respText))
+			}
 		}
 		handleError
 	)
@@ -57,6 +71,7 @@ fn similar(query, withData) {
 
 fn news(query, withData) {
 	fn handleError(err) {
+		setError(String(err))
 		withData([])
 	}
 
@@ -74,7 +89,9 @@ fn news(query, withData) {
 			200 -> with resp.json().then() fn(data) {
 				withData(data.hits)
 			}
-			_ -> handleError
+			_ -> with resp.text().then() fn(respText) {
+				handleError(new(Error, respText))
+			}
 		}
 		handleError
 	)
