@@ -22,12 +22,6 @@ search := import('../lib/search.js')
 
 MaxAutocompletes := 12
 
-// TODO: how do we keep this project updated?
-// maybe an update script that just fetches the file from the
-// github? and a place in the footer of th epage or something that
-// tells the user / me updating the site in the future what batch
-// it was last updated for, and when (calendar date).
-
 LandingParams := new(URL, location.href).searchParams
 
 State := {
