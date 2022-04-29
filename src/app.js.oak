@@ -94,7 +94,8 @@ fn performSearch {
 		render()
 
 		// focus on first result, if exists
-		if ? != company := document.querySelector('.company') -> company.focus()
+		if State.search.query |> trim() != '' &
+			? != company := document.querySelector('.company') -> company.focus()
 	}
 }
 
