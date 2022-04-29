@@ -5,6 +5,7 @@
 	take: take
 	append: append
 	filter: filter
+	compact: compact
 	contains?: contains?
 } := import('std')
 {
@@ -17,6 +18,8 @@
 	h: h
 } := import('../lib/torus.js')
 search := import('../lib/search.js')
+
+MaxAutocompletes := 12
 
 Batches := [
 	'S21', 'W21'
@@ -33,13 +36,24 @@ Batches := [
 // tells the user / me updating the site in the future what batch
 // it was last updated for, and when (calendar date).
 
+LandingParams := new(URL, location.href).searchParams
+
 State := {
 	search: {
 		loading?: false
-		query: ''
-		batch: ?
-		show_inactive: true
+		query: LandingParams.get('q') |> default('')
+		batch: LandingParams.get('batch') |> default(?)
+		show_inactive: LandingParams.get('show_inactive') != 'false'
 		expandedCompanies: []
+	}
+	autocomplete: {
+		show?: false
+		// NOTE: 0 here stands for "no suggestion selected", and
+		// suggestions are indexed from 1, so that the user can
+		// e.g. shift+Tab to de-focus from suggestions and focus
+		// on the raw input contente itself
+		idx: 0
+		suggestions: []
 	}
 	filters: {
 		batch: ?
@@ -47,6 +61,8 @@ State := {
 	}
 	// map of <company.slug> => [<news object>]
 	news: {}
+	// cache of information scraped from YC directory, /company?slug=<company>
+	scrapes: {}
 	results: []
 	colorscheme: if localStorage.getItem('colorscheme') {
 		'dark' -> 'dark'
@@ -58,13 +74,21 @@ State := {
 	}
 }
 
-fn submitSearch {
+fn performSearch {
 	State.search.loading? := true
 	State.search.expandedCompanies := []
 	State.news := {}
 	render()
 
-	with search.similarText({
+	// update URLSearchParams
+	url := new(URL, location.href)
+	searchParams := url.searchParams
+	if State.search.query != '' -> searchParams.set('q', State.search.query)
+	if State.search.batch != ? -> searchParams.set('batch', State.search.batch)
+	if !State.search.show_inactive -> searchParams.set('show_inactive', 'false')
+	history.replaceState(?, ?, String(url))
+
+	with search.similar({
 		text: State.search.query |> trim()
 		batch: State.search.batch
 		show_inactive: State.search.show_inactive
@@ -73,6 +97,10 @@ fn submitSearch {
 		State.results := companies
 		render()
 	}
+}
+
+fn urlDisplayHostname(url) {
+	new(URL, url).hostname |> trimStart('www.')
 }
 
 fn cleanName(name) {
@@ -94,6 +122,15 @@ fn toggleColorScheme {
 		_ -> 'light'
 	}
 	localStorage.setItem('colorscheme', State.colorscheme)
+}
+
+fn suggestionString(sugg) {
+	[name, desc] := sugg
+	name + '. ' + desc
+}
+
+fn autocompleteVisible? {
+	State.autocomplete.show? & len(State.autocomplete.suggestions) > 0
 }
 
 r := Renderer('#root')
@@ -131,10 +168,16 @@ fn WelcomeMessage {
 			are a few starting places:'
 		])
 		h(:div, ['welcome-examples'], {
-			Examples |> with map() fn(ex) h(:button, ['welcome-example-button'], {}, {
+			Examples |> with map() fn(ex) h(:button, [
+				'welcome-example-button'
+				if State.search.query {
+					ex -> 'example-selected'
+					_ -> ''
+				}
+			], {}, {
 				click: fn {
 					State.search.query := ex
-					submitSearch()
+					performSearch()
 				}
 			}, [ex])
 		})
@@ -147,9 +190,59 @@ fn WelcomeMessage {
 	])
 }
 
+fn Tag(text, type) h(
+	:div
+	[
+		'tag'
+		if type {
+			? -> ''
+			_ -> 'tag-' + type
+		}
+	]
+	[
+		if type != ? -> h(:div, ['tag-type'], [type])
+		h(:div, ['tag-value'], [text])
+	]
+)
+
+fn Label(type, text) h(:div, ['label'], [
+	h(:div, ['label-type'], [type])
+	h(:div, ['label-value'], [text])
+])
+
+fn ExternalLink(type, url) h(:a, ['external-link'], {
+	href: url
+	target: '_blank'
+	style: {
+		color: 'transparent'
+		'background-image': 'url("/img/icon-' + string(type) + '.png")'
+	}
+}, [string(type)])
+
 fn Company(company) {
 	id := company.slug
 	expanded? := State.search.expandedCompanies |> contains?(id)
+	scraped := State.scrapes.(id) |> default({})
+	scrapedCompany := scraped.company |> default({})
+
+	fn toggle {
+		if expanded? {
+			false -> {
+				State.search.expandedCompanies << id
+				if State.news.(id) = ? -> with search.news(cleanName(company.name)) fn(stories) {
+					State.news.(id) := stories
+					render()
+				}
+				if State.scrapes.(id) = ? -> with search.company(company.slug) fn(companyData) {
+					State.scrapes.(id) := companyData
+					render()
+				}
+			}
+			_ -> State.search.expandedCompanies := State.search.expandedCompanies |> filter(fn(c) c != id)
+		}
+		render()
+	}
+
 	h(:div, [
 		'company'
 		if expanded? {
@@ -162,44 +255,54 @@ fn Company(company) {
 			'Inactive' -> 'company-inactive'
 			'Public' -> 'company-public'
 		}
-	], {}, {
-		click: fn {
-			if expanded? {
-				false -> {
-					State.search.expandedCompanies << id
-					if State.news.(id) = ? -> with search.news(cleanName(company.name)) fn(stories) {
-						State.news.(id) := stories
-						render()
-					}
-				}
-				_ -> State.search.expandedCompanies := State.search.expandedCompanies |> filter(fn(c) c != id)
-			}
-			render()
-		}
+	], { tabIndex: 0 }, {
+		click: toggle
+		keypress: fn(evt) if evt.key = 'Enter' -> toggle()
 	}, [
 		h(:div, ['company-name-batch'], [
-			if imgSrc := company.small_logo_thumb_url {
-				?, '', '/avatars/thumb/missing.png' -> h(:div, ['company-img', 'missing'], [])
-				_ -> h(:img, ['company-img'], { src: imgSrc }, [])
-			}
-			h(:div, ['company-name'], [
-				h(:a, ['primary-name'], {
-					href: company.website
-					target: '_blank'
-				}, {
-					click: fn(evt) evt.stopPropagation()
-				}, [cleanName(company.name)])
+			h(:div, ['company-name-batch-header'], [
+				if imgSrc := company.small_logo_thumb_url {
+					?, '', '/avatars/thumb/missing.png' -> h(:div, ['company-img', 'missing'], [])
+					_ -> h(:img, ['company-img'], { src: imgSrc }, [])
+				}
+				h(:div, ['company-name'], [
+					h(:a, ['primary-name'], {
+						href: company.website
+						target: '_blank'
+					}, {
+						click: fn(evt) evt.stopPropagation()
+					}, [cleanName(company.name)])
+				])
+				h(:div, ['company-batch'], [company.batch])
 			])
-			h(:div, ['company-batch'], [company.batch])
+			if expanded? -> h(:div, ['company-name-batch-meta'], [
+				Label('Status', company.status)
+				Label('Team size', company.team_size)
+				Label('Location', company.location)
+				if scrapedCompany.year_founded != ? -> Label('Founded', scrapedCompany.year_founded)
+				if [] != tagEls := {
+					topCoTag := if company.top_company -> Tag('Yes', 'Top Company')
+					genericTags := company.tags |> map(fn(t) Tag(t))
+
+					[topCoTag] |> append(genericTags) |> compact()
+				} -> h(:div, ['company-name-batch-tags'], tagEls)
+				h(:div, ['company-name-batch-links'], [
+					ExternalLink(:yc, 'https://www.ycombinator.com/companies/' + company.slug)
+					if scrapedCompany.cb_url != ? -> ExternalLink(:crunchbase, scrapedCompany.cb_url)
+					if scrapedCompany.linkedin_url != ? -> ExternalLink(:linkedin, scrapedCompany.linkedin_url)
+					if scrapedCompany.twitter_url != ? -> ExternalLink(:twitter, scrapedCompany.twitter_url)
+					if scrapedCompany.fb_url != ? -> ExternalLink(:facebook, scrapedCompany.fb_url)
+				])
+			])
 		])
 		h(:div, ['company-description'], [
 			h(:p, [], [
 				if expanded? {
-					true -> if long := company.long_description |> trim() {
+					true -> if long := String(company.long_description).trim() {
 						?, '' -> company.one_liner
 						_ -> long
 					}
-					_ -> if one := company.one_liner |> trim() {
+					_ -> if one := String(company.one_liner).trim() {
 						?, '' -> company.long_description |> take(80) + '...'
 						_ -> one
 					}
@@ -210,9 +313,33 @@ fn Company(company) {
 					company.former_names |> with map() fn(name) h(:span, ['former-name'], [name])
 				)
 			})
+			if expanded? -> if news := scraped.newsItems {
+				?, [] -> ?
+				_ -> h(:div, ['company-news'], [
+					h(:div, ['company-news-header'], ['From the YC Directory'])
+					h(:ul, ['company-news-list'], {
+						news |> with map() fn(story) h(:li, ['company-news-item'], {}, {
+							click: fn(evt) evt.stopPropagation()
+						}, [
+							Link(
+								h(:span, [], [
+									story.title
+									h(:span, ['company-news-hostname'], [
+										urlDisplayHostname(story.url)
+									])
+								])
+								story.url
+								'company-news-link'
+							)
+							h(:div, ['company-news-meta'], [
+								h(:span, ['company-news-date'], [story.date])
+							])
+						])
+					})
+				])
+			}
 			if expanded? -> if news := State.news.(id) {
-				? -> h(:div, ['loading'], ['loading...'])
-				[] -> ?
+				?, [] -> ?
 				_ -> h(:div, ['company-news'], [
 					h(:div, ['company-news-header'], ['From Hacker News'])
 					h(:ul, ['company-news-list'], {
@@ -225,7 +352,7 @@ fn Company(company) {
 									if story.url {
 										?, '' -> ?
 										_ -> h(:span, ['company-news-hostname'], [
-											new(URL, story.url).hostname |> trimStart('www.')
+											urlDisplayHostname(story.url)
 										])
 									}
 								])
@@ -254,6 +381,15 @@ fn Company(company) {
 					})
 				])
 			}
+			// loading spinner for both news feeds
+			if expanded? & (scraped.newsItems = ? | State.news.(id) = ?) ->
+				h(:div, ['loading'], ['loading...'])
+			if expanded? -> h(:button, ['more-like-this-button'], {}, {
+				click: fn {
+					State.search.query := company.long_description |> default(company.one_liner)
+					performSearch()
+				}
+			}, ['More like this company →'])
 		])
 	])
 }
@@ -273,6 +409,7 @@ fn render {
 		h(:header, [], [
 			h(:a, ['logo'], { href: '/' }, {}, [
 				'YC Vibe Check'
+				h(:span, ['logo-subtitle', 'desktop'], [': What\'s everybody up to?'])
 			])
 			h(:nav, [], [
 				h(:button, ['colorscheme-button', 'colorscheme-' + State.colorscheme], {
@@ -301,21 +438,106 @@ fn render {
 			h(:form, ['search-form'], {}, {
 				submit: fn(evt) {
 					evt.preventDefault()
-					submitSearch()
+					performSearch()
 				}
 			}, [
 				h(:div, ['search-input-row'], [
-					h(:input, ['search-input'], {
-						type: 'text'
-						value: State.search.query
-						placeholder: 'Pitch your idea...'
-						autofocus: true
-					}, {
-						input: fn(evt) {
-							State.search.query := evt.target.value
-							render()
-						}
-					}, [])
+					h(:div, ['search-autocomplete-group'], [
+						h(:input, ['search-input'], {
+							type: 'text'
+							value: State.search.query
+							placeholder: 'Name a company or pitch an idea...'
+							autofocus: true
+						}, {
+							input: fn(evt) {
+								State.search.query := evt.target.value
+								State.autocomplete.idx := 0
+								State.autocomplete.suggestions :=
+									search.autocomplete(State.search.query) |> take(MaxAutocompletes)
+								render()
+							}
+							focus: fn {
+								State.autocomplete.show? := true
+								State.autocomplete.idx := 0
+								State.autocomplete.suggestions :=
+									search.autocomplete(State.search.query) |> take(MaxAutocompletes)
+								render()
+							}
+							blur: fn {
+								// NOTE: this is a little dirty, but the delay
+								// allows for clicking on a search result to work.
+								// If this isn't there, the mousedown outside of
+								// the input will blur the input, and there will be
+								// no suggestion for the click event to fire on
+								// thereafter.
+								with wait(0.1) fn {
+									State.autocomplete.show? := false
+									render()
+								}
+							}
+							keydown: fn(evt) if [evt.key, evt.shiftKey] {
+								['Enter', _] -> {
+									evt.preventDefault()
+									if autocompleteVisible?() & State.autocomplete.idx != 0 -> {
+										selectedSuggestion := State.autocomplete.suggestions.(State.autocomplete.idx - 1)
+										State.search.query := suggestionString(selectedSuggestion)
+									}
+									State.autocomplete.show? := false
+									performSearch()
+								}
+								['Escape', _] -> {
+									evt.preventDefault()
+									evt.target.blur()
+								}
+								['ArrowUp', _]
+								['Tab', true] -> if autocompleteVisible?() -> {
+									evt.preventDefault()
+									suggs := State.autocomplete.suggestions
+									MaxIdx := len(suggs) + 1
+									if len(suggs) > 0 -> {
+										State.autocomplete.idx := (State.autocomplete.idx - 1 + MaxIdx) % MaxIdx
+									}
+									render()
+								}
+								['ArrowDown', _]
+								['Tab', false] -> if autocompleteVisible?() -> {
+									evt.preventDefault()
+									suggs := State.autocomplete.suggestions
+									MaxIdx := len(suggs) + 1
+									if len(suggs) > 0 -> {
+										State.autocomplete.idx := (State.autocomplete.idx + 1) % MaxIdx
+									}
+									render()
+								}
+							}
+						}, [])
+						h(:div, [
+							'search-autocomplete'
+							if State.autocomplete.show? {
+								true -> 'show'
+								_ -> 'hide'
+							}
+						], {
+							State.autocomplete.suggestions |> with map() fn(sugg, i) {
+								[name, desc] := sugg
+								h(:div, [
+									'autocomplete-suggestion'
+									if State.autocomplete.idx - 1 {
+										i -> 'selected'
+										_ -> ''
+									}
+								], {}, {
+									click: fn(evt) {
+										State.search.query := suggestionString(sugg)
+										performSearch()
+									}
+								}, [
+									h(:span, ['autocomplete-suggestion-name'], [name])
+									h(:span, ['autocomplete-suggestion-desc'], [desc])
+								])
+							}
+						})
+					])
 					h(:button, ['search-button'], { title: 'Submit search' }, ['Search'])
 				])
 				h(:div, ['search-filter-row'], [
@@ -326,7 +548,7 @@ fn render {
 									'' -> ?
 									_ -> batch
 								}
-								submitSearch()
+								performSearch()
 							}
 						}, {
 							allBatches := h(:option, [], {
@@ -350,7 +572,7 @@ fn render {
 						}, {
 							change: fn(evt) {
 								State.search.show_inactive := evt.target.checked
-								submitSearch()
+								performSearch()
 							}
 						}, [])
 						h(:span, ['desktop'], ['Show inactive companies'])
@@ -387,6 +609,13 @@ fn render {
 	])
 }
 
+with document.body.addEventListener('keydown') fn(evt) if evt.key {
+	'/' -> if ? != searchInput := document.querySelector('.search-input') -> {
+		evt.preventDefault()
+		searchInput.focus()
+	}
+}
+
 render()
-submitSearch()
+performSearch()
 

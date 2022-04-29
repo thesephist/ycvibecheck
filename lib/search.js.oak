@@ -1,24 +1,41 @@
 {
+	println: println
 	map: map
 	merge: merge
+	reduce: reduce
 	filter: filter
 	entries: entries
 } := import('std')
 {
 	join: join
+	split: split
+	trim: trim
 } := import('str')
 fmt := import('fmt')
+sort := import('sort')
 
 fn queryEncode(opts) entries(opts) |>
 	filter(fn(entry) entry.1 != ?) |>
 	map(fn(entry) entry.0 + '=' + encodeURIComponent(entry.1)) |>
 	join('&')
 
-fn similarCompany(query) {
+fn company(slug, withData) {
+	fn handleError(err) {
+		withData(?)
+	}
 
+	fetch('/company?' + queryEncode({ slug: slug })).then(
+		fn(resp) if resp.status {
+			200 -> with resp.json().then() fn(data) {
+				withData(data)
+			}
+			_ -> handleError
+		}
+		handleError
+	)
 }
 
-fn similarText(query, withData) {
+fn similar(query, withData) {
 	query |> merge({
 		n: 50
 	})
@@ -61,5 +78,46 @@ fn news(query, withData) {
 		}
 		handleError
 	)
+}
+
+// escapeForRegExp takes a string and escapes any characters that have special
+// meaning in a JavaScript RegExp.
+fn escapeForRegExp(s) s |> with map() fn(c) if c {
+	'.', '*', '+', '?', '^', '$', '{', '}'
+	'[', ']', '(', ')', '|', '\\' -> '\\' + c
+	_ -> c
+}
+
+// countMatches counts the number of times the regular expression bound in
+// regexpExec matches in s. regexpExec must be a bound JavaScript RegExp#exec
+// method, where the regex has the global 'g' flag set.
+fn countMatches(s, regexpExec) {
+	fn sub(i) if regexpExec(s) {
+		? -> i
+		_ -> sub(i + 1)
+	}
+	sub(0)
+}
+
+fn autocomplete(query) {
+	words := query |> trim() |> split(' ') |> filter(fn(s) s != '')
+	if len(words) {
+		0 -> []
+		_ -> {
+			suggestions := words |> with reduce(YC_NAMES_DESC) fn(suggestions, word, i) {
+				lastWord? := i + 1 = len(words)
+				regexp := new(RegExp, '(^|\\W)' + escapeForRegExp(word) + if {
+					lastWord? -> ''
+					_ -> '($|\\W)'
+				}, 'img')
+
+				suggestions |> with filter() fn(sugg) if count := countMatches(sugg.0, regexp.exec.bind(regexp)) {
+					0 -> false
+					_ -> true
+				}
+			}
+			suggestions |> sort.sort(fn(sugg) sugg.0)
+		}
+	}
 }
 

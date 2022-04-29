@@ -48,7 +48,11 @@ input::placeholder {
     color: var(--secondary-text);
 }
 
-#root {
+#root,
+input,
+textarea,
+select,
+button {
 	font-family: system-ui, sans-serif;
 }
 
@@ -83,8 +87,14 @@ header a.logo {
 	text-decoration: none;
 }
 
-header a.logo:hover {
+header a.logo:hover,
+header a.logo:hover .logo-subtitle {
 	text-decoration: underline;
+}
+
+header a.logo .logo-subtitle {
+	font-weight: bold;
+	color: var(--secondary-text);
 }
 
 header .colorscheme-button {
@@ -175,27 +185,31 @@ header a.github-button:hover {
 }
 
 .welcome-example-button {
-    padding: 6px 12px;
+	padding: 4px 10px;
     font-size: 1em;
     background: var(--primary-bg);
     cursor: pointer;
     border-radius: 6px;
-    border: 0;
+    border: 2px solid var(--primary-bg);
     color: var(--primary-text);
     transition: transform .2s, box-shadow .2s;
 }
 
-.welcome-example-button:hover {
+.welcome-example-button:hover,
+.welcome-example-button.example-selected {
     transform: rotate(-3deg);
     box-shadow: 0 2px 6px var(--shadow-soft);
 }
 
-.welcome-example-button:nth-of-type(even):hover {
+.welcome-example-button:nth-of-type(even):hover,
+.welcome-example-button.example-selected:nth-of-type(even) {
     transform: rotate(3deg);
 }
 
-.welcome-example-button:active {
-    background: var(--hover-bg);
+.welcome-example-button:active,
+.welcome-example-button.example-selected {
+	color: var(--accenter);
+	border: 2px solid var(--accenter);
 }
 
 .welcome-hide-button {
@@ -225,6 +239,63 @@ header a.github-button:hover {
 form {
     width: 100%;
     margin: 24px 0;
+}
+
+form .search-autocomplete-group {
+    width: 0;
+    flex-grow: 1;
+	position: relative;
+}
+
+.search-autocomplete {
+	position: absolute;
+	z-index: 5;
+	top: calc(100% + 8px);
+	left: 0;
+	right: 0;
+	width: 100%;
+	max-height: calc(100vh - 64px);
+	background: var(--primary-bg);
+	border-radius: 6px;
+	box-shadow: 0 6px 36px -2px var(--shadow-soft);
+	overflow: hidden;
+	transition: opacity .3s, transform .3s;
+	transform-origin: top center;
+}
+
+.search-autocomplete.show {
+	opacity: 1;
+	transform: translate(0, 0);
+}
+
+.search-autocomplete.hide {
+	opacity: 0;
+	transform: translate(0, -12px) scaleY(0.7);
+}
+
+.search-autocomplete .autocomplete-suggestion {
+	padding: 8px 12px;
+	cursor: pointer;
+}
+
+.search-autocomplete .autocomplete-suggestion.selected,
+.search-autocomplete .autocomplete-suggestion:hover {
+	background: var(--hover-bg);
+}
+
+.search-autocomplete .autocomplete-suggestion:active {
+	background: var(--active-bg);
+}
+
+.search-autocomplete .autocomplete-suggestion-desc {
+	margin-left: 8px;
+	color: var(--secondary-text);
+}
+
+.search-autocomplete .autocomplete-suggestion-name,
+.search-autocomplete .autocomplete-suggestion-desc {
+	white-space: nowrap;
+	overflow: hidden;
 }
 
 form .search-input,
@@ -285,8 +356,8 @@ form input[type=checkbox] {
 }
 
 .search-input-row input {
-    width: 0;
-    flex-grow: 1;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 ul.search-results-list {
@@ -325,7 +396,7 @@ li.search-results-item {
 	width: calc(100% + 24px);
 	top: 0;
 	left: -12px;
-	padding: 6px;
+	padding: 8px;
 }
 
 .company.company-inactive:not(.company-expanded) {
@@ -341,14 +412,96 @@ li.search-results-item {
 }
 
 .company .company-name-batch {
+	min-width: 24ch;
+}
+
+.company .company-name-batch-header {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: inherit;
+    gap: 12px;
+}
+
+.company .company-name-batch-meta {
+	width: 24ch; /* matching parent */
+	box-sizing: border-box;
+	padding-left: 32px;
+	margin-top: 8px;
+}
+
+.label {
+    margin-bottom: 4px;
+}
+
+.label .label-type {
+    color: var(--secondary-text);
+    font-size: calc(1em - 4px);
+    margin-bottom: -4px;
+}
+
+.company .company-name-batch-tags {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 16px;
+    margin-bottom: 8px;
+}
+
+.tag {
+	display: flex;
+    flex-direction: row;
+    align-items: center;
+	background: var(--active-bg);
+	border-radius: 3px;
+	font-size: calc(1em - 4px);
+	margin: 0;
+    overflow: hidden;
+}
+
+.tag .tag-type,
+.tag .tag-value {
+	padding: 3px 8px;
+    line-height: 1.3em;
+}
+
+.tag .tag-type {
+    padding-right: 6px;
+}
+
+.tag .tag-value {
+    color: var(--primary-bg);
+	background: var(--secondary-text);
+}
+
+.tag .tag-type + .tag-value {
+    padding-left: 6px;
+}
+
+.company-name-batch-links {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+	margin: 16px 0;
+}
+
+.external-link {
+	display: block;
+	border-radius: 4px;
+	height: 24px;
+	width: 24px;
+	cursor: pointer;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+.external-link:hover {
+	opacity: .7;
 }
 
 .company .company-name {
-	min-width: 18ch;
+	flex-grow: 1;
 }
 
 .company .company-img {
@@ -378,6 +531,7 @@ li.search-results-item {
 .company .company-description p {
 	margin: 0;
 	max-width: 64ch;
+	white-space: pre-wrap;
 }
 
 .company .former-names {
@@ -394,7 +548,7 @@ li.search-results-item {
 }
 
 .company .company-news {
-	margin-top: 8px;
+	margin-top: 12px;
 }
 
 .company .company-news-header {
@@ -407,6 +561,7 @@ li.search-results-item {
 
 .company li.company-news-item {
 	list-style: none;
+	margin: 4px 0;
 }
 
 .company a.company-news-link {
@@ -435,6 +590,27 @@ li.search-results-item {
 
 .company .company-news-meta {
 	margin-top: -5px;
+}
+
+.company .more-like-this-button {
+    padding: 6px 12px;
+    font-size: 1em;
+    background: var(--primary-bg);
+    cursor: pointer;
+    border-radius: 6px;
+    border: 0;
+    color: var(--primary-text);
+	transition: background .1s;
+    margin: 0;
+    margin-top: 12px;
+}
+
+.company .more-like-this-button:hover {
+	background: var(--hover-bg);
+}
+
+.company .more-like-this-button:active {
+	background: var(--active-bg);
 }
 
 footer {
@@ -499,8 +675,8 @@ footer a:hover {
 }
 
 @media only screen and (max-width: 800px) {
-    .company .company-name {
-        min-width: 16ch;
+    .company .company-name-batch {
+        min-width: 20ch;
     }
 }
 
@@ -530,8 +706,24 @@ footer a:hover {
         justify-content: space-between;
     }
 
+    .company .company-name-batch-tags {
+        margin-bottom: 16px;
+    }
+
     .company .company-name {
         flex-grow: 1;
     }
+
+	.company .company-name-batch-meta {
+		padding-left: 0;
+	}
+
+	/* autocomplete dropdown positioning */
+	form .search-autocomplete-group {
+		position: initial;
+	}
+	form .search-input-row {
+		position: relative;
+	}
 }
 
