@@ -7,6 +7,9 @@ model = SentenceTransformer('sentence-transformers/all-roberta-large-v1')
 yc_companies = []
 with open('data/yc-embedded.json', 'r') as embeddings_file:
     yc_companies = [co for co in json.load(embeddings_file) if co.get('description_embedding')]
+    # make top companies appear first by default, then sort by batch
+    yc_companies.sort(key=lambda co: co['batch'], reverse=True)
+    yc_companies.sort(key=lambda co: 0 if co['top_company'] else 1)
 
 all_yc_names_and_desc = [[co['name'], co['one_liner'] or co['long_description']] for co in yc_companies]
 
@@ -28,8 +31,6 @@ def search(query):
 
 def all():
     results = yc_companies[:]
-    results.sort(key=lambda co: co['batch'], reverse=True)
-
     results = [co.copy() for co in results]
     for co in results:
         co.pop('description_embedding')
