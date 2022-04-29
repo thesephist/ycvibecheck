@@ -419,7 +419,10 @@ fn Company(company, index) {
 				h(:div, ['loading'], ['loading...'])
 			if expanded? -> h(:button, ['more-like-this-button'], {}, {
 				click: fn {
-					State.search.query := company.long_description |> default(company.one_liner)
+					State.search.query := if long := String(company.long_description).trim() {
+						?, '' -> company.one_liner
+						_ -> long
+					}
 					performSearch()
 				}
 			}, ['More companies like this →'])
