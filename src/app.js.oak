@@ -331,11 +331,11 @@ fn Company(company, index) {
 		h(:div, ['company-description'], [
 			h(:p, [], [
 				if expanded? {
-					true -> if long := String(company.long_description |> default('')).trim() {
+					true -> if long := company.long_description |> default('') |> trim() {
 						'' -> company.one_liner
 						_ -> long
 					}
-					_ -> if one := String(company.one_liner |> default('')).trim() {
+					_ -> if one := company.one_liner |> default('') |> trim() {
 						'' -> company.long_description |> take(80) + '...'
 						_ -> one
 					}
@@ -419,7 +419,7 @@ fn Company(company, index) {
 				h(:div, ['loading'], ['loading...'])
 			if expanded? -> h(:button, ['more-like-this-button'], {}, {
 				click: fn {
-					State.search.query := if long := String(company.long_description |> default('')).trim() {
+					State.search.query := if long := company.long_description |> default('') |> trim() {
 						'' -> company.one_liner
 						_ -> long
 					}
