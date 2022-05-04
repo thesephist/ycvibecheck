@@ -271,6 +271,7 @@ form .search-autocomplete-group {
 .search-autocomplete.hide {
     opacity: 0;
     transform: translate(0, -12px) scaleY(0.7);
+    pointer-events: none;
 }
 
 .search-autocomplete .autocomplete-suggestion {
