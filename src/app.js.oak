@@ -647,9 +647,11 @@ fn render {
 }
 
 with document.body.addEventListener('keydown') fn(evt) if evt.key {
-	'/' -> if ? != searchInput := document.querySelector('.search-input') -> {
-		evt.preventDefault()
-		searchInput.focus()
+	'/' -> if evt.target.tagName != 'INPUT' -> {
+		if ? != searchInput := document.querySelector('.search-input') -> {
+			evt.preventDefault()
+			searchInput.focus()
+		}
 	}
 }
 
