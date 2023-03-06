@@ -3,7 +3,7 @@ from sentence_transformers import SentenceTransformer
 
 # works with JSON sourced from https://github.com/akshaybhalotia/yc_company_scraper
 
-model = SentenceTransformer('sentence-transformers/all-roberta-large-v1')
+model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
 
 with open('data/yc.json', 'r') as yc_file:
     yc_companies = json.load(yc_file)

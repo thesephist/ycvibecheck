@@ -2,7 +2,7 @@ import json
 from scipy.spatial.distance import cosine
 from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer('sentence-transformers/all-roberta-large-v1')
+model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
 
 yc_companies = []
 with open('data/yc-embedded.json', 'r') as embeddings_file:
